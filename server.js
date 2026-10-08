@@ -2,40 +2,54 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-// อนุญาตให้เรียกใช้ API ได้จากทุกโดเมน (หรือระบุโดเมนเว็บของคุณเพื่อเพิ่มความปลอดภัย)
+// อนุญาตให้หน้าเว็บเรียกใช้งาน API ได้โดยไม่ติด CORS
 app.use(cors());
-
-// รองรับการรับข้อมูลรูปภาพ Base64 ขนาดใหญ่สูงสุด 10MB
-app.use(express.json({ limit: '10mb' }));
-
-// ดึง API Key จาก Environment Variable ของระบบโฮสติ้ง
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+app.use(express.json({ limit: '50mb' }));
 
 app.post('/api/analyze', async (req, res) => {
     try {
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
         if (!GEMINI_API_KEY) {
-            return res.status(500).json({ error: "ยังไม่ได้ตั้งค่า GEMINI_API_KEY บน Server" });
+            return res.status(500).json({ 
+                error: "ยังไม่ได้ตั้งค่า GEMINI_API_KEY บน Server" 
+            });
         }
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        // ใช้โมเดล gemini-1.5-flash ที่ถูกต้อง
+        const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+        const response = await fetch(googleApiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(req.body)
         });
 
         const data = await response.json();
+
+        if (!response.ok) {
+            console.error("Google API Error:", data);
+            return res.status(response.status).json({ 
+                error: data.error?.message || "เกิดข้อผิดพลาดในการเรียก Google API" 
+            });
+        }
+
         res.json(data);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "เกิดข้อผิดพลาดภายใน Server: " + err.message });
+
+    } catch (error) {
+        console.error("Server Internal Error:", error);
+        res.status(500).json({ error: error.message });
     }
 });
 
-// Endpoint สำหรับเช็กว่า Server ทำงานปกติหรือไม่
 app.get('/', (req, res) => {
-    res.send("Plant Analyzer API Server is Running!");
+    res.send('Plant Analyzer API Server is Running!');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
