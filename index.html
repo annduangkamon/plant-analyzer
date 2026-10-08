@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบวิเคราะห์และสำรวจพรรณไม้ (Dendrology Analysis)</title>
+    <!-- นำเข้า Marked.js สำหรับแปลง Markdown เป็น HTML -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2E7D32;
+            --primary-hover: #1b5e20;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #c8e6c9;
+        }
+
+        body {
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            max-width: 750px;
+            margin: auto;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .upload-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .box {
+            border: 2px dashed var(--primary-color);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafafa;
+            transition: all 0.2s ease;
+        }
+
+        .box:hover {
+            background: #e8f5e9;
+            transform: translateY(-2px);
+        }
+
+        .box p {
+            margin: 0;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .box img {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 6px;
+            display: none;
+            margin-top: 8px;
+        }
+
+        .dendrology-section {
+            background: #f9fbe7;
+            border: 1px solid #dce775;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .dendrology-section h4 {
+            margin-top: 0;
+            color: #33691e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #555;
+        }
+
+        .form-group select {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;
+            background-color: #fff;
+            outline: none;
+        }
+
+        .form-group select:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            font-size: 17px;
+            cursor: pointer;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            text-align: left;
+            background: #f1f8e9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            line-height: 1.7;
+            border: 1px solid var(--border-color);
+        }
+
+        .result-box h3 {
+            color: #1b5e20;
+            margin-top: 0;
+            border-bottom: 2px solid #a5d6a7;
+            padding-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🌳 วิเคราะห์และสำรวจพรรณไม้</h2>
+    <p class="subtitle">อัปโหลดภาพถ่ายและระบุลักษณะทางเดนโดรโลจี (Dendrology) เพื่อความแม่นยำสูงสุด</p>
+    
+    <!-- 1. ส่วนอัปโหลดรูปภาพ -->
+    <div class="upload-section">
+        <div class="box" onclick="document.getElementById('file-leaf').click()">
+            <p>🌿 ใบ</p>
+            <img id="preview-leaf" alt="ภาพใบ">
+            <input type="file" id="file-leaf" accept="image/*" style="display:none" onchange="previewImage(event, 'leaf')">
+        </div>
+        <div class="box" onclick="document.getElementById('file-stem').click()">
+            <p>🪵 ลำต้น/เปลือก</p>
+            <img id="preview-stem" alt="ภาพลำต้น">
+            <input type="file" id="file-stem" accept="image/*" style="display:none" onchange="previewImage(event, 'stem')">
+        </div>
+        <div class="box" onclick="document.getElementById('file-flower').click()">
+            <p>🌸 ดอก/ผล</p>
+            <img id="preview-flower" alt="ภาพดอก/ผล">
+            <input type="file" id="file-flower" accept="image/*" style="display:none" onchange="previewImage(event, 'flower')">
+        </div>
+        <div class="box" onclick="document.getElementById('file-form').click()">
+            <p>🌲 รูปทรงทรงพุ่ม</p>
+            <img id="preview-form" alt="ภาพทรงพุ่ม">
+            <input type="file" id="file-form" accept="image/*" style="display:none" onchange="previewImage(event, 'form')">
+        </div>
+    </div>
+
+    <!-- 2. ส่วนข้อมูลเดนโดรโลจี -->
+    <div class="dendrology-section">
+        <h4>🔍 ข้อมูลสังเกตเพิ่มเติมทางเดนโดรโลจี (ตัวเลือก)</h4>
+        <div class="form-grid">
+            
+            <div class="form-group">
+                <label for="leaf-arrangement">1. การเรียงตัวของใบ</label>
+                <select id="leaf-arrangement">
+                    <option value="">-- ไม่ได้ระบุ --</option>
+                    <option value="เรียงสลับ (Alternate)">เรียงสลับ (Alternate)</option>
+                    <option value="เรียงตรงข้าม (Opposite)">เรียงตรงข้าม (Opposite)</option>
+                    <option value="เรียงรอบข้อ (Whorled)">เรียงรอบข้อ (Whorled)</option>
+                    <option value="เรียงเป็นกระจุก (Clustered)">เรียงเป็นกระจุก (Clustered)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="leaf-type">2. ชนิดของใบ</label>
+                <select id="leaf-type">
+                    <option value="">-- ไม่ได้ระบุ --</option>
+                    <option value="ใบเดี่ยว (Simple Leaf)">ใบเดี่ยว (Simple Leaf)</option>
+                    <option value="ใบประกอบแบบขนนก (Pinnately Compound)">ใบประกอบแบบขนนก</option>
+                    <option value="ใบประกอบแบบนิ้วมือ (Palmately Compound)">ใบประกอบแบบนิ้วมือ</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="leaf-margin">3. ขอบใบและรูปร่าง</label>
+                <select id="leaf-margin">
+                    <option value="">-- ไม่ได้ระบุ --</option>
+                    <option value="ขอบเรียบ (Entire)">ขอบเรียบ (Entire)</option>
+                    <option value="ขอบหยักฟันเลื่อย (Serrated)">ขอบหยักฟันเลื่อย (Serrated)</option>
+                    <option value="ขอบหยักมน (Crenate)">ขอบหยักมน (Crenate)</option>
+                    <option value="ขอบเว้าเป็นแฉก (Lobed)">ขอบเว้าเป็นแฉก (Lobed)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="stem-bark">4. ลักษณะลำต้นและเปลือก</label>
+                <select id="stem-bark">
+                    <option value="">-- ไม่ได้ระบุ --</option>
+                    <option value="เปลือกเรียบ (Smooth)">เปลือกเรียบ (Smooth)</option>
+                    <option value="เปลือกแตกเป็นร่องลึก (Fissured/Deeply Grooved)">เปลือกแตกเป็นร่องลึก</option>
+                    <option value="เปลือกหลุดลอกเป็นแผ่น (Scaly/Peeling)">เปลือกหลุดลอกเป็นแผ่น</option>
+                    <option value="มีตุ่มระบายอากาศ (Lenticels)">มีตุ่มระบายอากาศ (Lenticels)</option>
+                    <option value="มีหนามหรือรอยแผลเป็นก้านใบ">มีหนาม / มีรอยแผลเป็นก้านใบ</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="exudate">5. น้ำยางและของเหลว (Exudates)</label>
+                <select id="exudate">
+                    <option value="">-- ไม่ได้ระบุ --</option>
+                    <option value="ไม่มีน้ำยาง (No latex)">ไม่มีน้ำยาง</option>
+                    <option value="ยางสีขาวนม (White Milky Latex)">ยางสีขาวนม</option>
+                    <option value="ยางสีเหลือง/ส้ม (Yellow/Orange Sap)">ยางสีเหลือง / สีส้ม</option>
+                    <option value="ยางใส หรือเปลี่ยนเป็นสีน้ำตาล/แดงเมื่อโดนอากาศ">ยางใส / เปลี่ยนเป็นสีแดง/น้ำตาล</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="odor">6. กลิ่นและลักษณะพิเศษ</label>
+                <select id="odor">
+                    <option value="">-- ไม่ได้ระบุ --</option>
+                    <option value="ไม่มีกลิ่นเฉพาะ">ไม่มีกลิ่นเฉพาะ</option>
+                    <option value="มีกลิ่นหอมระเหย/กลิ่นตระกูลส้ม-อบเชย">กลิ่นหอมระเหย (ส้ม/อบเชย)</option>
+                    <option value="มีกลิ่นฉุนเฉพาะตัว">มีกลิ่นฉุนเฉพาะตัว</option>
+                </select>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ปุ่มส่งวิเคราะห์ -->
+    <button id="analyze-btn" class="btn-submit" onclick="analyzePlant()">🚀 วิเคราะห์พรรณไม้</button>
+
+    <!-- ผลลัพธ์ -->
+    <div id="result" class="result-box" style="display:none;"></div>
+</div>
+
+<script>
+    const imageStore = { leaf: null, stem: null, flower: null, form: null };
+    
+    // ดึงมาจาก Render Web Service ของคุณ
+    const BACKEND_URL = "https://plant-analyzer-w058.onrender.com/api/analyze";
+
+    function previewImage(event, type) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    const imgElement = document.getElementById(`preview-${type}`);
+                    imgElement.src = compressedDataUrl;
+                    imgElement.style.display = "block";
+                    
+                    imageStore[type] = compressedDataUrl.split(',')[1];
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function analyzePlant() {
+        const resultDiv = document.getElementById('result');
+        const btn = document.getElementById('analyze-btn');
+        
+        const uploadedKeys = Object.keys(imageStore).filter(key => imageStore[key] !== null);
+        if (uploadedKeys.length === 0) {
+            alert("กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป เพื่อทำการวิเคราะห์");
+            return;
+        }
+
+        const leafArr = document.getElementById('leaf-arrangement').value;
+        const leafType = document.getElementById('leaf-type').value;
+        const leafMargin = document.getElementById('leaf-margin').value;
+        const stemBark = document.getElementById('stem-bark').value;
+        const exudate = document.getElementById('exudate').value;
+        const odor = document.getElementById('odor').value;
+
+        let dendrologyInfo = [];
+        if (leafArr) dendrologyInfo.push(`- การเรียงตัวของใบ: ${leafArr}`);
+        if (leafType) dendrologyInfo.push(`- ชนิดของใบ: ${leafType}`);
+        if (leafMargin) dendrologyInfo.push(`- ขอบใบและรูปร่าง: ${leafMargin}`);
+        if (stemBark) dendrologyInfo.push(`- ลักษณะลำต้นและเปลือก: ${stemBark}`);
+        if (exudate) dendrologyInfo.push(`- น้ำยาง/ของเหลว: ${exudate}`);
+        if (odor) dendrologyInfo.push(`- กลิ่นและลักษณะพิเศษ: ${odor}`);
+
+        let additionalPrompt = "";
+        if (dendrologyInfo.length > 0) {
+            additionalPrompt = "\n\nข้อมูลการสำรวจทางเดนโดรโลจีเพิ่มเติมจากผู้สำรวจ:\n" + dendrologyInfo.join("\n");
+        }
+
+        btn.disabled = true;
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML = "<em>⏳ กำลังส่งข้อมูลภาพและคุณลักษณะทางเดนโดรโลจีให้ AI วิเคราะห์...</em>";
+
+        const systemPrompt = `คุณคือนักพฤกษศาสตร์และผู้เชี่ยวชาญด้านเดนโดรโลจี (Dendrology) 
+จงวิเคราะห์ภาพถ่ายพรรณไม้ร่วมกับข้อมูลการสำรวจทางเดนโดรโลจีที่ผู้ใช้ระบุ แล้วตอบเป็นภาษาไทยโดยเรียงหัวข้อดังนี้:
+
+1. **ชื่อพรรณไม้** (ระบุชื่อไทย, ชื่อสามัญ, ชื่อวิทยาศาสตร์ และ วงศ์/Family)
+2. **ชนิดที่มีความคล้ายคลึงกัน (Similar Species)** (ระบุพืชใกล้เคียง พร้อมบอกข้อแตกต่างทางเดนโดรโลจีเพื่อแยกแยะ)
+3. **วิเคราะห์ลักษณะเด่นทางเดนโดรโลจี** (สรุปจุดสังเกตสำคัญจากภาพถ่ายและข้อมูลสังเกตการณ์ของผู้ใช้)
+4. **ถิ่นอาศัยและการดูแลรักษา** (สภาพแวดล้อมในธรรมชาติ, ความต้องการ แสง, น้ำ, ดิน)` + additionalPrompt;
+
+        let partsArray = [{ text: systemPrompt }];
+
+        uploadedKeys.forEach(key => {
+            partsArray.push({
+                inline_data: {
+                    mime_type: "image/jpeg",
+                    data: imageStore[key]
+                }
+            });
+        });
+
+        try {
+            const response = await fetch(BACKEND_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: partsArray }] })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(typeof data.error === 'string' ? data.error : data.error.message);
+            }
+
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error("ไม่พบข้อมูลตอบกลับจากระบบ AI");
+            }
+
+            const aiText = data.candidates[0].content.parts[0].text;
+            resultDiv.innerHTML = `<h3>🌿 ผลการวิเคราะห์พรรณไม้:</h3>` + marked.parse(aiText);
+
+        } catch (error) {
+            console.error(error);
+            resultDiv.innerHTML = "<span style='color:red;'> เกิดข้อผิดพลาด: " + error.message + "</span>";
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
