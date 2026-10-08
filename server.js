@@ -7,13 +7,13 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// รายชื่อโมเดลที่จะให้ทดลองตามลำดับ (ถ้าตัวแรกไม่ผ่าน จะลองตัวถัดไปให้อัตโนมัติ)
+// รายชื่อโมเดลรุ่นใหม่ที่ใช้งานได้ในปัจจุบัน (เรียงตามลำดับความเสถียร)
 const MODEL_CANDIDATES = [
     "gemini-2.5-flash",
+    "gemini-2.5-pro",
     "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-pro"
+    "gemini-2.0-flash-lite",
+    "gemini-3.8-flash"
 ];
 
 app.post('/api/analyze', async (req, res) => {
@@ -55,7 +55,7 @@ app.post('/api/analyze', async (req, res) => {
             }
         }
 
-        // หากทดลองทุกโมเดลแล้วไม่ผ่านทั้งหมด
+        // หากทดลองทุกโมเดลแล้วยังไม่ผ่าน
         return res.status(500).json({
             error: `ทดลองทุกโมเดลแล้วแต่ไม่สำเร็จ ข้อผิดพลาดล่าสุด: ${lastError}`
         });
