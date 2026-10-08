@@ -4,9 +4,17 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// อนุญาตให้หน้าเว็บเรียกใช้งาน API ได้โดยไม่ติดปัญหา CORS
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// รายชื่อโมเดลที่จะให้ทดลองตามลำดับ (ถ้าตัวแรกไม่ผ่าน จะลองตัวถัดไปให้อัตโนมัติ)
+const MODEL_CANDIDATES = [
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-pro"
+];
 
 app.post('/api/analyze', async (req, res) => {
     try {
@@ -18,27 +26,39 @@ app.post('/api/analyze', async (req, res) => {
             });
         }
 
-        // ใช้โมเดล gemini-1.5-flash-latest
-        const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+        let lastError = null;
 
-        const response = await fetch(googleApiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(req.body)
-        });
+        // วนลูปทดลองทีละโมเดล
+        for (const modelName of MODEL_CANDIDATES) {
+            try {
+                const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+                
+                const response = await fetch(googleApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(req.body)
+                });
 
-        const data = await response.json();
+                const data = await response.json();
 
-        if (!response.ok) {
-            console.error("Google API Error:", data);
-            return res.status(response.status).json({ 
-                error: data.error?.message || "เกิดข้อผิดพลาดในการเรียก Google API" 
-            });
+                if (response.ok) {
+                    console.log(`Successfully used model: ${modelName}`);
+                    return res.json(data); // สำเร็จ! ส่งผลลัพธ์กลับทันที
+                }
+
+                console.warn(`Model ${modelName} failed (${response.status}):`, data.error?.message);
+                lastError = data.error?.message || `HTTP ${response.status}`;
+
+            } catch (err) {
+                console.warn(`Network/Fetch error with ${modelName}:`, err.message);
+                lastError = err.message;
+            }
         }
 
-        res.json(data);
+        // หากทดลองทุกโมเดลแล้วไม่ผ่านทั้งหมด
+        return res.status(500).json({
+            error: `ทดลองทุกโมเดลแล้วแต่ไม่สำเร็จ ข้อผิดพลาดล่าสุด: ${lastError}`
+        });
 
     } catch (error) {
         console.error("Server Internal Error:", error);
@@ -47,7 +67,7 @@ app.post('/api/analyze', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('Plant Analyzer API Server is Running!');
+    res.send('Plant Analyzer API Server is Running with Auto-Fallback!');
 });
 
 app.listen(PORT, () => {
