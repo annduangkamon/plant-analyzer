@@ -18,8 +18,8 @@ app.post('/api/analyze', async (req, res) => {
             });
         }
 
-        // ใช้โมเดล gemini-1.5-flash ที่ถูกต้อง
-        const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        // ปรับเปลี่ยนโมเดลเป็น gemini-2.0-flash
+        const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
         const response = await fetch(googleApiUrl, {
             method: 'POST',
